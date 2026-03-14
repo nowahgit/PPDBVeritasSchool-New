@@ -43,12 +43,16 @@ export async function POST(req: Request) {
       where: { user_id: targetUserId },
       update: {
         ...restData,
+        prestasi: restData.prestasi || "",
+        file_path: restData.file_path || "",
         tanggallahir_pendaftar: new Date(validatedData.tanggallahir_pendaftar),
         status_validasi: session.user.role === "PANITIA" ? "VALID" : "MENUNGGU", 
         catatan: null,
       },
       create: {
         ...restData,
+        prestasi: restData.prestasi || "",
+        file_path: restData.file_path || "",
         user_id: targetUserId,
         tanggallahir_pendaftar: new Date(validatedData.tanggallahir_pendaftar),
         id_berkas: Math.floor(Math.random() * 1000000), // Manually generate since not autoincrement in model?
@@ -59,7 +63,7 @@ export async function POST(req: Request) {
     return NextResponse.json(berkas, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ message: "Invalid data", errors: error.errors }, { status: 400 });
+      return NextResponse.json({ message: "Invalid data", errors: error.issues }, { status: 400 });
     }
     console.error("Berkas submission error:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
