@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique @db.VarChar(20)
+  password String @db.VarChar(255)
+  role     Role   @default(PENDAFTAR)
+  admin    Admin?
+  berkas   Berkas?
+  seleksi  Seleksi[]
+}
+
+enum Role {
+  PENDAFTAR
+  PANITIA
+}
+
+model Admin {
+  id_panitia   Int     @id @default(autoincrement())
+  user_id      Int     @unique
+  nama_panitia String  @db.VarChar(50)
+  no_hp        String  @db.VarChar(15)
+  user         User    @relation(fields: [user_id], references: [id])
+  seleksi      Seleksi[]
+}
+
+model Berkas {
+  id_berkas              Int            @id @default(autoincrement())
+  user_id                Int            @unique
+  nisn_pendaftar         String         @db.VarChar(20)
+  nama_pendaftar         String         @db.VarChar(50)
+  tanggallahir_pendaftar DateTime
+  alamat_pendaftar       String         @db.Text
+  agama                  String         @db.VarChar(20)
+  prestasi               String         @db.Text
+  nama_ortu              String         @db.VarChar(50)
+  pekerjaan_ortu         String         @db.VarChar(50)
+  no_hp_ortu             String         @db.VarChar(15)
+  alamat_ortu            String         @db.Text
+  jenis_berkas           String         @db.VarChar(50)
+  file_path              String         @db.VarChar(255)
+  status_validasi        StatusValidasi @default(MENUNGGU)
+  catatan                String?        @db.Text
+  tanggal_validasi       DateTime?
+  user                   User           @relation(fields: [user_id], references: [id])
+}
+
+enum StatusValidasi {
+  MENUNGGU
+  VALID
+  DITOLAK
+}
+
+model Seleksi {
+  id_seleksi     Int           @id @default(autoincrement())
+  id_panitia     Int
+  user_id        Int
+  nama_seleksi   String        @db.VarChar(50)
+  nilai_smt1     Float
+  nilai_smt2     Float
+  nilai_smt3     Float
+  nilai_smt4     Float
+  nilai_smt5     Float
+  status_seleksi StatusSeleksi @default(MENUNGGU)
+  waktu_seleksi  DateTime
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  panitia        Admin         @relation(fields: [id_panitia], references: [id_panitia])
+  user           User          @relation(fields: [user_id], references: [id])
+}
+
+enum StatusSeleksi {
+  MENUNGGU
+  LULUS
+  TIDAK_LULUS
+}
