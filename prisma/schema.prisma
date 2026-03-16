@@ -50,6 +50,10 @@ model Berkas {
   catatan                String?        @db.Text
   tanggal_validasi       DateTime?
   user                   User           @relation(fields: [user_id], references: [id])
+
+  @@index([nisn_pendaftar])
+  @@index([nama_pendaftar])
+  @@index([status_validasi])
 }
 
 model Seleksi {

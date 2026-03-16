@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   User, 
   Lock, 
@@ -16,13 +16,14 @@ import { useSession } from "next-auth/react";
 export default function AdminSettingsPage() {
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Form states
   const [profileData, setProfileData] = useState({
-    username: session?.user?.username || "",
-    nama_panitia: "Administrator", // Placeholder, ideally fetch from prisma
-    no_hp: "08123456789"
+    username: "",
+    nama_panitia: "",
+    no_hp: ""
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -31,18 +32,66 @@ export default function AdminSettingsPage() {
     confirmPassword: ""
   });
 
+  useEffect(() => {
+    if (session?.user) {
+      fetchAdminProfile();
+    }
+  }, [session]);
+
+  const fetchAdminProfile = async () => {
+    setIsFetching(true);
+    try {
+      const res = await fetch("/api/admin/profile");
+      if (res.ok) {
+        const data = await res.json();
+        setProfileData({
+          username: (session?.user as any).username || "",
+          nama_panitia: data.nama_panitia || "",
+          no_hp: data.no_hp || ""
+        });
+      } else {
+        setProfileData(prev => ({
+          ...prev,
+          username: (session?.user as any).username || "",
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch admin profile", error);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    setMessage(null);
+
+    try {
+      const res = await fetch("/api/admin/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama_panitia: profileData.nama_panitia,
+          no_hp: profileData.no_hp
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Gagal update profil");
+
       setMessage({ type: "success", text: "Profil berhasil diperbarui." });
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage(null);
+    
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setMessage({ type: "error", text: "Konfirmasi password tidak cocok." });
       return;
@@ -53,13 +102,38 @@ export default function AdminSettingsPage() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/auth/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          oldPassword: passwordData.oldPassword,
+          newPassword: passwordData.newPassword
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Gagal ubah password");
+
       setMessage({ type: "success", text: "Password berhasil diubah." });
-      setIsLoading(false);
       setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
-    }, 1000);
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (isFetching) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-gray-50/50">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="animate-spin text-blue-600" size={32} />
+          <p className="text-sm font-bold text-gray-500 uppercase tracking-widest leading-none">Memuat Pengaturan...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -98,24 +172,28 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Lengkap</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Lengkap Panitia</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input 
                     type="text" 
+                    required
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium focus:border-[#1e3a8a] focus:outline-none transition-all"
+                    placeholder="Masukkan nama lengkap"
                     value={profileData.nama_panitia}
                     onChange={(e) => setProfileData({...profileData, nama_panitia: e.target.value})}
                   />
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nomor HP</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nomor HP Aktif</label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input 
                     type="text" 
+                    required
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium focus:border-[#1e3a8a] focus:outline-none transition-all"
+                    placeholder="08xxxxxxxxxx"
                     value={profileData.no_hp}
                     onChange={(e) => setProfileData({...profileData, no_hp: e.target.value})}
                   />
@@ -127,7 +205,7 @@ export default function AdminSettingsPage() {
                 className="w-full bg-[#1e3a8a] text-white py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-blue-800 transition-all disabled:opacity-50 mt-2"
               >
                 {isLoading ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
-                Simpan Profil
+                Simpan Perubahan
               </button>
             </form>
           </div>
@@ -142,10 +220,12 @@ export default function AdminSettingsPage() {
             </div>
             <form onSubmit={handleChangePassword} className="p-6 space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Password Lama</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Password Saat Ini</label>
                 <input 
                   type="password" 
+                  required
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:border-[#1e3a8a] focus:outline-none"
+                  placeholder="Password lama"
                   value={passwordData.oldPassword}
                   onChange={(e) => setPasswordData({...passwordData, oldPassword: e.target.value})}
                 />
@@ -154,18 +234,22 @@ export default function AdminSettingsPage() {
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Password Baru</label>
                 <input 
                   type="password" 
+                  required
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:border-[#1e3a8a] focus:outline-none"
+                  placeholder="Min. 8 karakter"
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ulangi Password Baru</label>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Konfirmasi Password</label>
                 <div className="relative">
                    <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                    <input 
                     type="password" 
+                    required
                     className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:border-[#1e3a8a] focus:outline-none"
+                    placeholder="Ulangi password baru"
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
                   />
@@ -177,7 +261,7 @@ export default function AdminSettingsPage() {
                 className="w-full bg-[#111827] text-white py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-gray-800 transition-all disabled:opacity-50 mt-2"
               >
                 {isLoading ? <Loader2 className="animate-spin" size={14} /> : <Lock size={14} />}
-                Ganti Password
+                Update Password
               </button>
             </form>
           </div>
