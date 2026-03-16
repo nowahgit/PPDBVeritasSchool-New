@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   User, 
@@ -44,6 +44,20 @@ export default function PendaftaranForm() {
     alamat_ortu: "",
     jenis_berkas: "Reguler"
   });
+
+  useEffect(() => {
+    const draft = sessionStorage.getItem("pendaftaran_draft");
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        setFormData(prev => ({ ...prev, ...parsed }));
+        // Optional: clear draft after loading? 
+        // sessionStorage.removeItem("pendaftaran_draft");
+      } catch (e) {
+        console.error("Error parsing draft", e);
+      }
+    }
+  }, []);
 
   // Dynamic Prestasi List
   const [prestasiList, setPrestasiList] = useState<PrestasiItem[]>([

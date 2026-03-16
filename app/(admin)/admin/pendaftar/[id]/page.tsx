@@ -28,6 +28,8 @@ interface PrestasiItem {
 interface PendaftarDetail {
   id: number;
   username: string;
+  jenis_kelamin: string | null;
+  asal_sekolah: string | null;
   berkas: {
     id_berkas: number;
     nisn_pendaftar: string;
@@ -240,6 +242,8 @@ export default function PendaftarDetailPage() {
               <InfoItem label="NISN" value={data.berkas?.nisn_pendaftar} />
               <InfoItem label="Tanggal Lahir" value={data.berkas?.tanggallahir_pendaftar ? new Date(data.berkas.tanggallahir_pendaftar).toLocaleDateString("id-ID") : "-"} />
               <InfoItem label="Agama" value={data.berkas?.agama} />
+              <InfoItem label="Jenis Kelamin" value={data.jenis_kelamin} />
+              <InfoItem label="Asal Sekolah" value={data.asal_sekolah} />
               <InfoItem label="Jalur" value={data.berkas?.jenis_berkas} />
               
               <div className="md:col-span-2 space-y-2">

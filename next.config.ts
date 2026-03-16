@@ -1,14 +1,12 @@
-import type { NextConfig } from "next";
-
+// next.config.ts
 const nextConfig = {
-  /* config options here */
-  reactCompiler: true,
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
+  images: {
+    unoptimized: true,
   },
 };
 
 export default nextConfig;
+

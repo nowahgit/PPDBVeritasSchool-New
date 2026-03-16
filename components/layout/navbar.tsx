@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
-import { User, LogIn, UserPlus, Menu, X } from "lucide-react";
+import { User, LogIn, UserPlus, Menu, X, Settings } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
@@ -61,13 +61,20 @@ export const Navbar = () => {
         <div className="hidden md:flex items-center gap-3">
           {session ? (
             <>
-              <Link
-                href={session.user.role === "PANITIA" ? "/admin" : "/dashboard"}
-                className="flex items-center gap-2 text-xs font-bold text-primary px-5 py-2 rounded-full border border-primary/20 hover:bg-primary/5 transition-all"
-              >
-                <User size={14} />
-                <span className="uppercase tracking-widest">Dashboard</span>
-              </Link>
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-2 text-xs font-bold text-gray-700 px-4 py-2 rounded-full hover:bg-gray-100 transition-all uppercase tracking-widest"
+                >
+                  <Settings size={14} />
+                  <span>Pengaturan</span>
+                </Link>
+                <Link
+                  href={session.user.role === "PANITIA" ? "/admin" : "/dashboard"}
+                  className="flex items-center gap-2 text-xs font-bold text-primary px-5 py-2 rounded-full border border-primary/20 hover:bg-primary/5 transition-all"
+                >
+                  <User size={14} />
+                  <span className="uppercase tracking-widest">Dashboard</span>
+                </Link>
               <button
                 onClick={() => setShowLogoutConfirm(true)}
                 className="text-xs font-bold text-gray-500 hover:text-red-600 px-3 py-2 transition-all uppercase tracking-widest"
@@ -127,6 +134,14 @@ export const Navbar = () => {
               <hr className="border-gray-100" />
               {session ? (
                 <div className="flex flex-col gap-3">
+                  <Link
+                    href="/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 text-sm font-bold text-gray-700 p-3 rounded-xl border border-gray-100"
+                  >
+                    <Settings size={18} />
+                    <span>PENGATURAN</span>
+                  </Link>
                   <Link
                     href={session.user.role === "PANITIA" ? "/admin" : "/dashboard"}
                     className="flex items-center justify-center gap-2 text-sm font-bold text-primary p-3 rounded-xl border border-primary/20"

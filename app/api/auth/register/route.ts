@@ -4,14 +4,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const registerSchema = z.object({
-  username: z.string().min(3).max(20),
+  username: z.string().min(4).max(20),
   password: z.string().min(6),
+  email: z.string().email().optional(),
+  jenis_kelamin: z.enum(["Laki-laki", "Perempuan"]).optional(),
+  asal_sekolah: z.string().max(100).optional(),
 });
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { username, password } = registerSchema.parse(body);
+    console.log("Registration body:", body);
+    const { username, password, email, jenis_kelamin, asal_sekolah } = registerSchema.parse(body);
 
     const existingUser = await prisma.user.findUnique({
       where: { username },
@@ -30,6 +34,9 @@ export async function POST(req: Request) {
       data: {
         username,
         password: hashedPassword,
+        email,
+        jenis_kelamin,
+        asal_sekolah,
         role: "PENDAFTAR",
       },
     });
@@ -45,6 +52,20 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    console.error("Registration error:", error);
+
+    // Handle Prisma unique constraint error
+    if ((error as any).code === 'P2002') {
+      const target = (error as any).meta?.target;
+      if (target?.includes('email')) {
+        return NextResponse.json({ message: "Email sudah digunakan" }, { status: 400 });
+      }
+      if (target?.includes('username')) {
+        return NextResponse.json({ message: "Username sudah digunakan" }, { status: 400 });
+      }
+    }
+
     return NextResponse.json(
       { message: "Terjadi kesalahan server" },
       { status: 500 }

@@ -10,28 +10,34 @@ import {
   EyeOff, 
   Loader2, 
   AlertCircle, 
-  ShieldCheck, 
-  ClipboardList, 
-  CheckCircle,
-  UserPlus
+  Star,
+  Users,
+  Trophy,
+  Mail,
+  School,
+  CheckCircle
 } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [jenisKelamin, setJenisKelamin] = useState("");
+  const [asalSekolah, setAsalSekolah] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
   // Password Strength Logic
   const strength = useMemo(() => {
-    if (!password) return { label: "", color: "bg-gray-100", width: "0%" };
-    if (password.length < 6) return { label: "Lemah", color: "bg-red-500", width: "33%" };
-    if (password.length < 8) return { label: "Cukup", color: "bg-yellow-500", width: "66%" };
-    return { label: "Kuat", color: "bg-green-500", width: "100%" };
+    if (!password) return { label: "", color: "bg-gray-200", text: "", width: "0%" };
+    if (password.length < 6) return { label: "Lemah", color: "bg-red-500", text: "text-red-500", width: "33%" };
+    if (password.length < 8) return { label: "Cukup", color: "bg-yellow-500", text: "text-yellow-500", width: "66%" };
+    return { label: "Kuat", color: "bg-green-600", text: "text-green-600", width: "100%" };
   }, [password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,8 +45,8 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError("");
 
-    if (username.length < 4 || username.includes(" ")) {
-      setError("Username minimal 4 karakter dan tanpa spasi.");
+    if (username.length < 4 || username.length > 20 || username.includes(" ")) {
+      setError("Username minimal 4-20 karakter dan tanpa spasi.");
       setIsLoading(false);
       return;
     }
@@ -55,7 +61,13 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ 
+          username, 
+          password, 
+          email: email || undefined, 
+          jenis_kelamin: jenisKelamin || undefined, 
+          asal_sekolah: asalSekolah || undefined 
+        }),
       });
 
       const data = await res.json();
@@ -75,196 +87,247 @@ export default function RegisterPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
-      {/* Kolom Kiri - Desktop (Sama dengan Login) */}
-      <div className="hidden lg:flex bg-[#111827] flex-col justify-between p-12 text-white">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Veritas School</h1>
-          <p className="text-gray-400 text-sm mt-2 font-medium">Sistem Penerimaan Peserta Didik Baru</p>
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white p-6">
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Pendaftaran Berhasil</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            Akun kamu telah berhasil dibuat. Kamu akan dialihkan ke halaman login dalam beberapa saat.
+          </p>
+          <div className="flex items-center justify-center gap-2 text-blue-900 font-semibold">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Mengalihkan...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-          <div className="mt-12 space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <ShieldCheck size={20} className="text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-200 uppercase tracking-wider">Keamanan Data</p>
-                <p className="text-xs text-gray-400 mt-1">Data pendaftaran aman dan terenkripsi</p>
-              </div>
+  return (
+    <div className="h-screen overflow-hidden flex flex-row">
+      {/* Kolom Kiri */}
+      <div className="hidden md:flex md:w-1/2 relative h-screen">
+        <img 
+          src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&q=80"
+          alt="Suasana kampus sekolah"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/50" />
+        
+        <div className="absolute bottom-10 left-10 right-10">
+          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center mb-6">
+            <span className="text-blue-900 font-bold text-xl">V</span>
+          </div>
+          
+          <h1 className="text-3xl font-bold text-white leading-tight">
+            Mulai Perjalananmu<br />
+            Bersama Kami.
+          </h1>
+          
+          <p className="text-sm text-gray-300 mt-3 max-w-md leading-relaxed">
+            Daftarkan diri dan jadilah bagian dari keluarga besar Veritas School.
+          </p>
+          
+          <div className="flex flex-col gap-3 mt-8">
+            <div className="flex items-center gap-3">
+              <Star className="w-4 h-4 text-white" />
+              <span className="text-sm text-gray-200">Kurikulum berkualitas internasional</span>
             </div>
-            <div className="flex items-start gap-4">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <ClipboardList size={20} className="text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-200 uppercase tracking-wider">Real-time Tracking</p>
-                <p className="text-xs text-gray-400 mt-1">Pantau status pendaftaran secara real-time</p>
-              </div>
+            <div className="flex items-center gap-3">
+              <Users className="w-4 h-4 text-white" />
+              <span className="text-sm text-gray-200">Komunitas belajar yang supportif</span>
             </div>
-            <div className="flex items-start gap-4">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <CheckCircle size={20} className="text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-200 uppercase tracking-wider">Seleksi Objektif</p>
-                <p className="text-xs text-gray-400 mt-1">Proses seleksi transparan dan objektif</p>
-              </div>
+            <div className="flex items-center gap-3">
+              <Trophy className="w-4 h-4 text-white" />
+              <span className="text-sm text-gray-200">Ribuan alumni berprestasi</span>
             </div>
           </div>
         </div>
-        
-        <p className="text-gray-600 text-xs font-medium tracking-widest uppercase">
-          © 2025 Veritas School. All rights reserved.
-        </p>
       </div>
 
-      {/* Kolom Kanan - Register Form */}
-      <div className="bg-white flex items-center justify-center p-8 lg:p-16">
-        <div className="w-full max-w-sm flex flex-col items-center">
-          {/* Logo Inisial */}
-          <div className="w-12 h-12 bg-[#1e3a8a] text-white rounded-xl flex items-center justify-center text-xl font-black shadow-lg shadow-blue-900/10 mb-6">
-            V
+      {/* Kolom Kanan */}
+      <div className="flex-1 bg-white p-10 md:p-16 flex flex-col justify-center h-screen overflow-y-auto">
+        <div className="max-w-md w-full mx-auto">
+          <div className="text-xs font-semibold text-blue-900 tracking-widest uppercase mb-2">
+            PPDB 2025/2026
           </div>
+          
+          <h2 className="text-2xl font-bold text-gray-900 mt-2">
+            Buat Akun Baru
+          </h2>
+          
+          <p className="text-sm text-gray-500 mt-1 mb-8">
+            Sudah punya akun?{" "}
+            <Link href="/login" className="text-blue-900 font-semibold hover:underline">
+              Masuk sekarang
+            </Link>
+          </p>
 
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Buat Akun Baru</h2>
-            <p className="text-sm text-gray-500 mt-1 font-medium">Daftar sebagai calon peserta didik Veritas School</p>
-          </div>
-
-          {isSuccess ? (
-            <div className="text-center py-10 space-y-4 animate-in zoom-in duration-300">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-green-50 rounded-full mb-4">
-                <CheckCircle className="text-green-600" size={40} />
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Username
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent placeholder-gray-400"
+                  placeholder="Buat username unik (min. 4 karakter)"
+                />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 tracking-tight">Pendaftaran Berhasil</h3>
-              <p className="text-sm text-gray-500 font-medium leading-relaxed max-w-[240px] mx-auto text-center">
-                Akun telah aktif. Mengalihkan Anda ke halaman masuk...
-              </p>
+              <p className="text-xs text-gray-400 mt-1">Tidak bisa diubah setelah mendaftar</p>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="w-full space-y-4">
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                  <AlertCircle size={18} className="shrink-0" />
-                  <span className="font-bold">{error}</span>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent placeholder-gray-400"
+                  placeholder="Masukkan email aktif kamu"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Digunakan untuk reset password</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Jenis Kelamin
+              </label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  required
+                  value={jenisKelamin}
+                  onChange={(e) => setJenisKelamin(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent appearance-none bg-white font-medium"
+                >
+                  <option value="">pilih...</option>
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Asal SMP/MTs/Sederajat
+              </label>
+              <div className="relative">
+                <School className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  required
+                  value={asalSekolah}
+                  onChange={(e) => setAsalSekolah(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent placeholder-gray-400"
+                  placeholder="Contoh: SMP Negeri 1 Jakarta"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-9 pr-10 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent placeholder-gray-400"
+                  placeholder="Buat password (min. 6 karakter)"
+                />
+                <div 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 text-gray-400" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-gray-400" />
+                  )}
+                </div>
+              </div>
+              {password && (
+                <div className="mt-1.5">
+                  <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all duration-200 ${strength.color}`}
+                      style={{ width: strength.width }}
+                    />
+                  </div>
+                  <p className={`text-xs mt-1 font-medium ${strength.text}`}>{strength.label}</p>
                 </div>
               )}
+            </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-widest pl-1">
-                  Username
-                </label>
-                <div className="relative group">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1e3a8a] transition-colors">
-                    <User size={18} />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none transition-all font-medium"
-                    placeholder="Buat username unik kamu"
-                  />
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Konfirmasi Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className={`w-full pl-9 pr-10 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent placeholder-gray-400 ${
+                    confirmPassword && password !== confirmPassword ? "border-red-300" : "border-gray-300"
+                  }`}
+                  placeholder="Ulangi password kamu"
+                />
+                <div 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4 text-gray-400" />
+                  ) : (
+                    <Eye className="w-4 h-4 text-gray-400" />
+                  )}
                 </div>
-                <p className="text-[10px] text-gray-400 font-medium pl-1 italic">Minimal 4 karakter, tanpa spasi</p>
               </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-xs text-red-500 mt-1">Password tidak cocok</p>
+              )}
+            </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-widest pl-1">
-                  Password
-                </label>
-                <div className="relative group">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1e3a8a] transition-colors">
-                    <Lock size={18} />
-                  </div>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none transition-all font-medium"
-                    placeholder="Buat password yang kuat"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                {password && (
-                  <div className="pt-2 px-1">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Keamanan</span>
-                      <span className={`text-[10px] font-bold uppercase tracking-widest ${
-                        strength.label === "Lemah" ? "text-red-500" :
-                        strength.label === "Cukup" ? "text-yellow-600" : "text-green-600"
-                      }`}>{strength.label}</span>
-                    </div>
-                    <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full transition-all duration-300 ${strength.color}`}
-                        style={{ width: strength.width }}
-                      />
-                    </div>
-                  </div>
-                )}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center gap-2 mt-2">
+                <AlertCircle className="w-4 h-4 text-red-500" />
+                <span className="text-sm text-red-700">{error}</span>
               </div>
+            )}
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-widest pl-1">
-                  Konfirmasi Password
-                </label>
-                <div className="relative group">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#1e3a8a] transition-colors">
-                    <Lock size={18} />
-                  </div>
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none transition-all font-medium ${
-                      confirmPassword && password !== confirmPassword ? "border-red-500 ring-red-100" : "border-gray-300"
-                    }`}
-                    placeholder="Ulangi password kamu"
-                  />
-                </div>
-                {confirmPassword && password !== confirmPassword && (
-                  <p className="text-[10px] text-red-500 font-bold pl-1">Password tidak cocok</p>
-                )}
-              </div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-blue-900 hover:bg-blue-800 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors duration-150 mt-2 flex items-center justify-center disabled:opacity-70"
+            >
+              {isLoading && <Loader2 className="animate-spin w-4 h-4 mr-2" />}
+              {isLoading ? "Mohon tunggu..." : "Buat Akun"}
+            </button>
+          </form>
 
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-[#1e3a8a] text-white py-3 rounded-lg font-bold text-sm tracking-widest uppercase transition-all hover:bg-blue-800 shadow-md shadow-blue-900/10 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed mt-4 active:scale-[0.98]"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin" size={16} />
-                    <span>Loading...</span>
-                  </>
-                ) : (
-                  <>
-                    <UserPlus size={18} />
-                    <span>Buat Akun</span>
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-
-          <div className="mt-8 text-center">
-            <p className="text-gray-500 text-sm font-medium">
-              Sudah punya akun?{" "}
-              <Link href="/login" className="text-[#1e3a8a] font-bold hover:underline ml-1">
-                Masuk sekarang
-              </Link>
-            </p>
+          <div className="text-xs text-gray-400 text-center mt-8 pb-10">
+            © 2025 Veritas School. Sistem PPDB Online.
           </div>
         </div>
       </div>

@@ -40,7 +40,7 @@ export default function AdminTambahPendaftarPage() {
     pekerjaan_ortu: "",
     no_hp_ortu: "",
     alamat_ortu: "",
-    jenis_berkas: "Reguler"
+    jenis_berkas: "UMUM"
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +64,7 @@ export default function AdminTambahPendaftarPage() {
       const regData = await regRes.json();
       if (!regRes.ok) throw new Error(regData.message || "Gagal membuat akun.");
 
-      const userId = regData.user.id; // Assume API returns user object with id
+      const userId = regData.userId;
 
       // 2. Upload File if exists
       let publicUrl = "";
@@ -297,21 +297,10 @@ export default function AdminTambahPendaftarPage() {
               </div>
 
                {/* Step 3: Berkas */}
-               <div className="md:col-span-2 pt-4">
-                  <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px] mb-4">Dokumen & Jalur</h4>
+                <div className="md:col-span-2 pt-4">
+                  <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-[2px] mb-4">Lampiran Berkas</h4>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Jalur Pendaftaran</label>
-                <select 
-                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:bg-white focus:border-[#1e3a8a] focus:outline-none"
-                   value={formData.jenis_berkas}
-                   onChange={(e) => setFormData({...formData, jenis_berkas: e.target.value})}
-                >
-                  <option>Reguler</option>
-                  <option>Prestasi</option>
-                  <option>Afirmasi</option>
-                </select>
-              </div>
+              
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Lampiran Berkas (PDF/JPG)</label>
                 <div className="relative">

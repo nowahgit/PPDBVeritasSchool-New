@@ -3,6 +3,34 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    // Pendaftar only sees their own; PANITIA sees all
+    if (session.user.role === "PENDAFTAR") {
+      const seleksi = await prisma.seleksi.findFirst({
+        where: { user_id: parseInt(session.user.id) },
+        orderBy: { created_at: "desc" },
+      });
+      return NextResponse.json(seleksi);
+    }
+
+    // PANITIA: return all
+    const seleksi = await prisma.seleksi.findMany({
+      include: { user: { select: { id: true, username: true } } },
+      orderBy: { created_at: "desc" },
+    });
+    return NextResponse.json(seleksi);
+  } catch (error) {
+    console.error("GET seleksi error:", error);
+    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -43,7 +71,7 @@ export async function POST(req: Request) {
     } else {
       const created = await prisma.seleksi.create({
         data: {
-          id_seleksi: Math.floor(Math.random() * 1000000), // Random ID since it's not autoincrement in model? Wait, schema says Int @id @default(autoincrement()) usually but here it just says Int @id
+          id_seleksi: Math.floor(Math.random() * 1000000),
           id_panitia: parseInt(session.user.id),
           user_id,
           nama_seleksi,

@@ -46,6 +46,9 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id.toString(),
           username: user.username,
+          email: user.email,
+          jenis_kelamin: user.jenis_kelamin,
+          asal_sekolah: user.asal_sekolah,
           role: user.role,
         };
       },
@@ -58,6 +61,9 @@ export const authOptions: NextAuthOptions = {
           ...token,
           id: user.id,
           username: (user as any).username,
+          email: (user as any).email,
+          jenis_kelamin: (user as any).jenis_kelamin,
+          asal_sekolah: (user as any).asal_sekolah,
           role: (user as any).role,
         };
       }
@@ -70,6 +76,9 @@ export const authOptions: NextAuthOptions = {
           ...session.user,
           id: token.id,
           username: token.username,
+          email: token.email,
+          jenis_kelamin: token.jenis_kelamin,
+          asal_sekolah: token.asal_sekolah,
           role: token.role,
         },
       };
