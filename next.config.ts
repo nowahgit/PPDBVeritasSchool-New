@@ -1,7 +1,10 @@
 // next.config.ts
 const nextConfig = {
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   images: {
     unoptimized: true,
