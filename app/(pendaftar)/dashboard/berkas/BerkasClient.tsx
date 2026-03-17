@@ -19,13 +19,42 @@ export default function BerkasClient({ berkas }: { berkas: any }) {
   const [showDialog, setShowDialog] = useState(false);
   const [dialogConfig, setDialogConfig] = useState({ type: "success", title: "", description: "" });
 
-  const handleSimulateUpload = async () => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setDialogConfig({
+        type: "error",
+        title: "File Terlalu Besar",
+        description: "Ukuran file maksimal adalah 2MB."
+      });
+      setShowDialog(true);
+      return;
+    }
+
     setIsLoading(true);
-    // Simulating file upload - in real app would use a proper upload handler
-    const simulatedPath = `/uploads/berkas_${berkas.user_id}_${Date.now()}.pdf`;
     
     try {
-      const res = await uploadBerkas(simulatedPath);
+      // 1. Upload to cloud storage (Supabase via API)
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const uploadData = await uploadRes.json();
+
+      if (!uploadRes.ok) {
+        throw new Error(uploadData.message || "Gagal mengunggah file ke server.");
+      }
+
+      // 2. Save URL to database
+      const res = await uploadBerkas(uploadData.url);
+      
       if (res.success) {
         setDialogConfig({
           type: "success",
@@ -36,19 +65,21 @@ export default function BerkasClient({ berkas }: { berkas: any }) {
         setDialogConfig({
           type: "error",
           title: "Gagal",
-          description: res.message || "Terjadi kesalahan saat mengunggah berkas."
+          description: res.message || "Terjadi kesalahan saat menyimpan data berkas."
         });
       }
       setShowDialog(true);
-    } catch (err) {
+    } catch (err: any) {
       setDialogConfig({
         type: "error",
         title: "Kesalahan",
-        description: "Terjadi kesalahan sistem."
+        description: err.message || "Terjadi kesalahan sistem."
       });
       setShowDialog(true);
     } finally {
       setIsLoading(false);
+      // Reset input
+      e.target.value = "";
     }
   };
 
@@ -144,14 +175,17 @@ export default function BerkasClient({ berkas }: { berkas: any }) {
             </p>
           </div>
           
-          <button
-            onClick={handleSimulateUpload}
-            disabled={isLoading}
-            className="bg-white text-[#111827] px-8 py-3 rounded-md font-bold uppercase tracking-wider text-xs flex items-center gap-3 hover:bg-gray-100 transition-all disabled:opacity-70 mt-2"
-          >
+          <label className={`bg-white text-[#111827] px-8 py-3 rounded-md font-bold uppercase tracking-wider text-xs flex items-center gap-3 transition-all cursor-pointer ${isLoading ? "opacity-70 pointer-events-none" : "hover:bg-gray-100"} mt-2`}>
             {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
             {isLoading ? "Mengunggah..." : "Pilih & Unggah File"}
-          </button>
+            <input 
+              type="file" 
+              className="hidden" 
+              accept="application/pdf"
+              onChange={handleFileUpload}
+              disabled={isLoading}
+            />
+          </label>
         </div>
       )}
 
