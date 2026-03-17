@@ -9,10 +9,11 @@ import { authOptions } from "@/lib/auth";
 export default async function SeleksiDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id: idStr } = await params;
   const session = await getServerSession(authOptions);
-  const userId = parseInt(params.id);
+  const userId = parseInt(idStr);
   
   const user = await prisma.user.findUnique({
     where: { id: userId },

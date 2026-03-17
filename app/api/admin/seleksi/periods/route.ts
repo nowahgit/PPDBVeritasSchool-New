@@ -10,14 +10,29 @@ export async function GET() {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Grouping manually since Prisma groupby is limited for what we want
-    // We want the name, the earliest date, and count of participants
+    // 1. Fetch defined periods
+    const definedPeriods = await prisma.selectionPeriod.findMany({
+      orderBy: { created_at: "desc" }
+    });
+
+    // 2. Fetch all active seleksi records to count participants and handle legacy periods
     const allSeleksi = await prisma.seleksi.findMany({
+      where: { is_archived: false },
       orderBy: { nama_seleksi: "asc" }
     });
 
     const groups: Record<string, any> = {};
 
+    // First, populate with defined periods
+    definedPeriods.forEach(p => {
+      groups[p.nama] = {
+        nama_seleksi: p.nama,
+        waktu_seleksi: p.tanggal_buka,
+        count: 0
+      };
+    });
+
+    // Then add participant counts (and handle periods that might not be in SelectionPeriod but are in Seleksi)
     allSeleksi.forEach(s => {
       if (!groups[s.nama_seleksi]) {
         groups[s.nama_seleksi] = {

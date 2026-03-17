@@ -15,7 +15,9 @@ import {
   MapPin,
   Calendar,
   BookOpen,
-  Trophy
+  Trophy,
+  Mail,
+  School
 } from "lucide-react";
 
 export default function AdminTambahPendaftarPage() {
@@ -29,6 +31,9 @@ export default function AdminTambahPendaftarPage() {
     // Account
     username: "",
     password: "",
+    email: "",
+    jenis_kelamin: "Laki-laki",
+    asal_sekolah: "",
     // Berkas
     nisn_pendaftar: "",
     nama_pendaftar: "",
@@ -55,11 +60,17 @@ export default function AdminTambahPendaftarPage() {
     setError("");
 
     try {
-      // 1. Register Account
-      const regRes = await fetch("/api/auth/register", {
+      // 1. Create Account via Admin API
+      const regRes = await fetch("/api/admin/pendaftar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: formData.username, password: formData.password }),
+        body: JSON.stringify({ 
+          username: formData.username, 
+          password: formData.password,
+          email: formData.email || null,
+          jenis_kelamin: formData.jenis_kelamin || "Laki-laki",
+          asal_sekolah: formData.asal_sekolah || ""
+        }),
       });
       const regData = await regRes.json();
       if (!regRes.ok) throw new Error(regData.message || "Gagal membuat akun.");
@@ -174,6 +185,19 @@ export default function AdminTambahPendaftarPage() {
                     placeholder="Minimal 6 karakter"
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Email (Opsional)</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input 
+                      type="email" 
+                      className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm font-medium focus:border-[#1e3a8a] focus:outline-none"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -226,6 +250,30 @@ export default function AdminTambahPendaftarPage() {
                   value={formData.nama_pendaftar}
                   onChange={(e) => setFormData({...formData, nama_pendaftar: e.target.value})}
                 />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Asal Sekolah</label>
+                <div className="relative">
+                  <School className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input 
+                    type="text" 
+                    required
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:bg-white focus:border-[#1e3a8a] focus:outline-none"
+                    value={formData.asal_sekolah}
+                    onChange={(e) => setFormData({...formData, asal_sekolah: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Jenis Kelamin</label>
+                <select 
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:bg-white focus:border-[#1e3a8a] focus:outline-none"
+                  value={formData.jenis_kelamin}
+                  onChange={(e) => setFormData({...formData, jenis_kelamin: e.target.value})}
+                >
+                  <option>Laki-laki</option>
+                  <option>Perempuan</option>
+                </select>
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Tanggal Lahir</label>

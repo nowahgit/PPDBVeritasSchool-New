@@ -16,25 +16,16 @@ export async function getPendaftar({
 
   const where: any = {
     role: "PENDAFTAR",
-    berkas: {
-      ...(status !== "ALL" && {
-        status_validasi: status as StatusValidasi,
-      }),
-      ...(search && {
+    AND: [
+      status !== "ALL" ? { berkas: { status_validasi: status as StatusValidasi } } : {},
+      search ? {
         OR: [
-          {
-            nama_pendaftar: {
-              contains: search,
-            },
-          },
-          {
-            nisn_pendaftar: {
-              contains: search,
-            },
-          },
-        ],
-      }),
-    },
+          { berkas: { nama_pendaftar: { contains: search } } },
+          { berkas: { nisn_pendaftar: { contains: search } } },
+          { username: { contains: search } }
+        ]
+      } : {}
+    ]
   };
 
   const [users, total] = await Promise.all([
@@ -52,6 +43,7 @@ export async function getPendaftar({
             nama_pendaftar: true,
             status_validasi: true,
             jenis_berkas: true,
+            alamat_pendaftar: true,
           },
         },
         seleksi: {

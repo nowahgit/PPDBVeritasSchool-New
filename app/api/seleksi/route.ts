@@ -69,10 +69,18 @@ export async function POST(req: Request) {
       });
       return NextResponse.json(updated);
     } else {
+      // Get panitia id from Admin table
+      const admin = await prisma.admin.findUnique({
+        where: { user_id: parseInt((session.user as any).id) }
+      });
+
+      if (!admin) {
+        return NextResponse.json({ message: "Data panitia tidak ditemukan" }, { status: 404 });
+      }
+
       const created = await prisma.seleksi.create({
         data: {
-          id_seleksi: Math.floor(Math.random() * 1000000),
-          id_panitia: parseInt(session.user.id),
+          id_panitia: admin.id_panitia,
           user_id,
           nama_seleksi,
           waktu_seleksi: new Date(waktu_seleksi),

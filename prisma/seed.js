@@ -54,6 +54,15 @@ const dataAdmin = [
 ];
 
 async function main() {
+  console.log("Cleaning up database...");
+  await prisma.seleksi.deleteMany();
+  await prisma.berkas.deleteMany();
+  await prisma.arsipSeleksi.deleteMany();
+  await prisma.selectionPeriod.deleteMany();
+  await prisma.admin.deleteMany();
+  await prisma.user.deleteMany();
+  console.log("Database cleaned.");
+
   console.log("Seeding database...");
   const hashedPassword = await bcrypt.hash("password123", 10);
 

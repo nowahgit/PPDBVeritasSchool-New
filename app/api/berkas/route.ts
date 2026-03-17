@@ -55,7 +55,6 @@ export async function POST(req: Request) {
         file_path: restData.file_path || "",
         user_id: targetUserId,
         tanggallahir_pendaftar: new Date(validatedData.tanggallahir_pendaftar),
-        id_berkas: Math.floor(Math.random() * 1000000), // Manually generate since not autoincrement in model?
         status_validasi: session.user.role === "PANITIA" ? "VALID" : "MENUNGGU",
       },
     });

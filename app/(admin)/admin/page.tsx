@@ -8,7 +8,8 @@ import {
   Clock, 
   CheckCircle, 
   XCircle,
-  Eye
+  Eye,
+  ShieldCheck
 } from "lucide-react";
 
 export default async function AdminDashboard() {
@@ -19,11 +20,12 @@ export default async function AdminDashboard() {
   }
 
   // Fetch summary data
-  const [totalPendaftar, waitingValidasi, validBerkas, rejectedBerkas, recentApplicants] = await Promise.all([
+  const [totalPendaftar, waitingValidasi, validBerkas, rejectedBerkas, totalAdmin, recentApplicants] = await Promise.all([
     prisma.user.count({ where: { role: "PENDAFTAR" } }),
     prisma.berkas.count({ where: { status_validasi: "MENUNGGU" } }),
     prisma.berkas.count({ where: { status_validasi: "VALID" } }),
     prisma.berkas.count({ where: { status_validasi: "DITOLAK" } }),
+    prisma.admin.count(),
     prisma.user.findMany({
       where: { role: "PENDAFTAR" },
       include: { berkas: true },
@@ -57,6 +59,12 @@ export default async function AdminDashboard() {
       icon: <XCircle className="text-red-500" size={24} />,
       color: "border-red-200",
     },
+    {
+      label: "Total Admin",
+      value: totalAdmin,
+      icon: <ShieldCheck className="text-indigo-600" size={24} />,
+      color: "border-indigo-200",
+    },
   ];
 
   const getStatusBadge = (status: string) => {
@@ -85,7 +93,7 @@ export default async function AdminDashboard() {
       {/* Page Content */}
       <div className="px-8 py-6 flex flex-col gap-6">
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {cards.map((card, idx) => (
             <div key={idx} className={`bg-white border border-gray-200 rounded-lg p-5 flex items-start justify-between`}>
               <div>

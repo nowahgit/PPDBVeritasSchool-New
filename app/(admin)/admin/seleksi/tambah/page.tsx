@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Loader2, Calendar, Target } from "lucide-react";
+import { tambahPeriode } from "../actions";
 
 export default function TambahSeleksiPage() {
   const router = useRouter();
@@ -17,13 +18,21 @@ export default function TambahSeleksiPage() {
     e.preventDefault();
     setIsLoading(true);
     
-    // Note: Since there is no "Period" model, we just simulate or 
-    // create a placeholder if the system requires it.
-    // For now, we just redirect as per flow.
-    setTimeout(() => {
+    try {
+      const result = await tambahPeriode(formData);
+      
+      if (result.success) {
+        router.refresh(); // Ensure the layout/cache is updated
+        router.push("/admin/seleksi");
+      } else {
+        alert("Gagal menyimpan periode: " + result.message);
+      }
+    } catch (err) {
+      console.error("Submit error:", err);
+      alert("Terjadi kesalahan sistem.");
+    } finally {
       setIsLoading(false);
-      router.push("/admin/seleksi");
-    }, 1000);
+    }
   };
 
   return (

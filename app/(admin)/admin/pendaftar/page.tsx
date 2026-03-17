@@ -28,27 +28,17 @@ export default async function PendaftarListPage({
 
   return (
     <>
-      <header className="bg-white border-b border-gray-100 px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 border border-blue-100">
-            <UserPlus size={24} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-1">
-              Data Pendaftar
-            </h1>
-            <p className="text-sm font-semibold text-slate-400 uppercase tracking-widest leading-none">
-              Manajemen Pendaftaran Siswa Baru
-            </p>
-          </div>
+      <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-[#111827]">Daftar Pendaftar</h2>
+          <p className="text-sm text-[#6b7280]">Manajemen seluruh berkas pendaftaran siswa baru.</p>
         </div>
-        
         <Link 
           href="/admin/pendaftar/tambah"
-          className="bg-[#1e3a8a] hover:bg-blue-800 text-white px-6 py-3 rounded-xl text-sm font-extrabold flex items-center gap-2.5 transition-all shadow-lg shadow-blue-900/10 active:scale-[0.98] uppercase tracking-tighter"
+          className="bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-blue-800 transition-colors"
         >
-          <Plus size={18} strokeWidth={3} />
-          Registrasi Pendaftar
+          <Plus size={16} />
+          Tambah Pendaftar
         </Link>
       </header>
 

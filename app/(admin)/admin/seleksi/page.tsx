@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   ClipboardList, 
   Plus, 
@@ -12,9 +13,13 @@ import {
   Settings,
   AlertTriangle,
   Loader2,
-  Users
+  Users,
+  Archive
 } from "lucide-react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+
+import { archiveSelectionPeriod } from "./actions";
+import DialogCard from "@/components/ui/DialogCard";
 
 interface SeleksiGroup {
   nama_seleksi: string;
@@ -23,12 +28,16 @@ interface SeleksiGroup {
 }
 
 export default function SeleksiListPage() {
+  const router = useRouter();
   const [periods, setPeriods] = useState<SeleksiGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRunning, setIsRunning] = useState<string | null>(null);
-  const [minScore, setMinScore] = useState(75); // UI state for selection
+  const [isArchiving, setIsArchiving] = useState<string | null>(null);
+  const [minScore, setMinScore] = useState(75); 
   const [showConfig, setShowConfig] = useState<string | null>(null);
   const [showConfirmRun, setShowConfirmRun] = useState<string | null>(null);
+  const [showConfirmArchive, setShowConfirmArchive] = useState<string | null>(null);
+  const [showSuccessArchive, setShowSuccessArchive] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPeriods();
@@ -46,6 +55,22 @@ export default function SeleksiListPage() {
       console.error("Fetch periods failed", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleArchive = async (nama_seleksi: string) => {
+    setShowConfirmArchive(null);
+    setIsArchiving(nama_seleksi);
+    
+    const result = await archiveSelectionPeriod(nama_seleksi);
+    setIsArchiving(null);
+    
+    if (result.success) {
+      setShowSuccessArchive(nama_seleksi);
+      router.refresh();
+      fetchPeriods();
+    } else {
+      alert("Gagal mengarsipkan: " + result.message);
     }
   };
 
@@ -154,13 +179,24 @@ export default function SeleksiListPage() {
                       </button>
                     </div>
                   ) : (
-                    <button 
-                      onClick={() => setShowConfig(period.nama_seleksi)}
-                      className="bg-[#1e3a8a] text-white px-5 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-blue-800 transition-colors shadow-sm"
-                    >
-                      <Settings size={14} />
-                      Konfigurasi Seleksi
-                    </button>
+                    <div className="flex items-center gap-2">
+                       <button 
+                        onClick={() => setShowConfig(period.nama_seleksi)}
+                        disabled={isArchiving === period.nama_seleksi}
+                        className="bg-[#1e3a8a] text-white px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-blue-800 transition-colors shadow-sm disabled:opacity-50"
+                      >
+                        <Settings size={14} />
+                        Konfigurasi
+                      </button>
+                      <button 
+                        onClick={() => setShowConfirmArchive(period.nama_seleksi)}
+                        disabled={isArchiving === period.nama_seleksi}
+                        className="bg-orange-50 text-orange-600 border border-orange-200 px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-orange-100 transition-colors disabled:opacity-50"
+                      >
+                        {isArchiving === period.nama_seleksi ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
+                        Arsipkan
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -175,14 +211,34 @@ export default function SeleksiListPage() {
         </div>
       </div>
 
-      <ConfirmDialog
+      <DialogCard
         isOpen={!!showConfirmRun}
-        title="Jalankan seleksi otomatis?"
-        message="Sistem akan menghitung rata-rata nilai semua pendaftar dan menentukan status lulus/tidak lulus secara otomatis. Proses ini tidak bisa dibatalkan."
+        type="info"
+        title="Jalankan Seleksi?"
+        description="Sistem akan menghitung hasil seleksi otomatis untuk semua pendaftar di periode ini."
         confirmLabel="Ya, Jalankan"
-        confirmVariant="primary"
+        showConfirm
         onConfirm={() => showConfirmRun && runSeleksi(showConfirmRun)}
-        onCancel={() => setShowConfirmRun(null)}
+        onClose={() => setShowConfirmRun(null)}
+      />
+
+      <DialogCard
+        isOpen={!!showConfirmArchive}
+        type="archive"
+        title="Arsipkan Periode Seleksi?"
+        description="Periode ini akan dipindahkan ke Arsip Seleksi dan tidak dapat diubah lagi. Data tetap bisa dilihat sewaktu-waktu."
+        confirmLabel="Ya, Arsipkan"
+        showConfirm
+        onConfirm={() => showConfirmArchive && handleArchive(showConfirmArchive)}
+        onClose={() => setShowConfirmArchive(null)}
+      />
+
+      <DialogCard
+        isOpen={!!showSuccessArchive}
+        type="success"
+        title="Berhasil Diarsipkan"
+        description={`Periode ${showSuccessArchive} telah dipindahkan ke Arsip Seleksi.`}
+        onClose={() => setShowSuccessArchive(null)}
       />
     </>
   );

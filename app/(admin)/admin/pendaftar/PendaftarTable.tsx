@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, FileText, UserIcon, MoreVertical } from "lucide-react";
+import { Eye, FileText, UserIcon, MoreVertical, Trash2, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface Pendaftar {
   id: number;
@@ -24,6 +27,29 @@ interface PendaftarTableProps {
 }
 
 const PendaftarTable = ({ pendaftar }: PendaftarTableProps) => {
+  const router = useRouter();
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState<number | null>(null);
+
+  const handleDelete = async (id: number) => {
+    setIsDeleting(id);
+    try {
+      const res = await fetch(`/api/admin/pendaftar/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        router.refresh();
+      } else {
+        const err = await res.json();
+        alert(err.message || "Gagal menghapus pendaftar");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+    } finally {
+      setIsDeleting(null);
+      setShowConfirmDelete(null);
+    }
+  };
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "VALID":
@@ -83,7 +109,7 @@ const PendaftarTable = ({ pendaftar }: PendaftarTableProps) => {
                 </td>
                 <td className="px-6 py-5 text-center">
                   <span className={`px-2 py-1 text-[10px] font-bold rounded-full ${
-                    item.jenis_kelamin === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'
+                    (item.jenis_kelamin === 'L' || item.jenis_kelamin === 'Laki-laki') ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'
                   }`}>
                     {item.jenis_kelamin || "-"}
                   </span>
@@ -110,6 +136,14 @@ const PendaftarTable = ({ pendaftar }: PendaftarTableProps) => {
                       <Eye size={14} />
                       Detail
                     </Link>
+                    <button 
+                      onClick={() => setShowConfirmDelete(item.id)}
+                      disabled={isDeleting === item.id}
+                      className="p-2 text-rose-500 hover:bg-rose-50 rounded-md transition-colors disabled:opacity-50"
+                      title="Hapus"
+                    >
+                      {isDeleting === item.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -123,6 +157,16 @@ const PendaftarTable = ({ pendaftar }: PendaftarTableProps) => {
           )}
         </tbody>
       </table>
+
+      <ConfirmDialog
+        isOpen={showConfirmDelete !== null}
+        title="Hapus Pendaftar?"
+        message="Data pendaftar akan dihapus secara permanen dari sistem."
+        confirmLabel="Ya, Hapus"
+        confirmVariant="danger"
+        onConfirm={() => showConfirmDelete && handleDelete(showConfirmDelete)}
+        onCancel={() => setShowConfirmDelete(null)}
+      />
     </div>
   );
 };

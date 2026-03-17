@@ -16,7 +16,13 @@ import {
   ExternalLink,
   Save,
   Loader2,
-  FileText
+  FileText,
+  Edit2,
+  Lock,
+  Mail,
+  School,
+  X,
+  Trash2
 } from "lucide-react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
@@ -28,6 +34,7 @@ interface PrestasiItem {
 interface PendaftarDetail {
   id: number;
   username: string;
+  email: string | null;
   jenis_kelamin: string | null;
   asal_sekolah: string | null;
   berkas: {
@@ -66,10 +73,35 @@ export default function PendaftarDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(false);
   const [isSavingScores, setIsSavingScores] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [catatan, setCatatan] = useState("");
   const [showCatatanForm, setShowCatatanForm] = useState(false);
   const [showConfirmValid, setShowConfirmValid] = useState(false);
   const [showConfirmReject, setShowConfirmReject] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  const [statusSeleksi, setStatusSeleksi] = useState("MENUNGGU");
+
+  // Edit form state
+  const [editForm, setEditForm] = useState({
+    username: "",
+    password: "",
+    email: "",
+    asal_sekolah: "",
+    jenis_kelamin: "",
+    // Berkas fields
+    nama_pendaftar: "",
+    nisn_pendaftar: "",
+    alamat_pendaftar: "",
+    agama: "",
+    tanggallahir_pendaftar: "",
+    nama_ortu: "",
+    no_hp_ortu: "",
+    pekerjaan_ortu: "",
+    alamat_ortu: ""
+  });
 
   // Scores state
   const [scores, setScores] = useState({
@@ -94,6 +126,7 @@ export default function PendaftarDetailPage() {
         smt4: s.nilai_smt4,
         smt5: s.nilai_smt5
       });
+      setStatusSeleksi(s.status_seleksi);
     }
   }, [data]);
 
@@ -105,11 +138,102 @@ export default function PendaftarDetailPage() {
         const json = await res.json();
         setData(json);
         if (json.berkas?.catatan) setCatatan(json.berkas.catatan);
+        
+        // Populate edit form
+        setEditForm({
+          username: json.username || "",
+          password: "",
+          email: json.email || "",
+          asal_sekolah: json.asal_sekolah || "",
+          jenis_kelamin: json.jenis_kelamin || "Laki-laki",
+          nama_pendaftar: json.berkas?.nama_pendaftar || "",
+          nisn_pendaftar: json.berkas?.nisn_pendaftar || "",
+          alamat_pendaftar: json.berkas?.alamat_pendaftar || "",
+          agama: json.berkas?.agama || "Katolik",
+          tanggallahir_pendaftar: json.berkas?.tanggallahir_pendaftar ? new Date(json.berkas.tanggallahir_pendaftar).toISOString().split('T')[0] : "",
+          nama_ortu: json.berkas?.nama_ortu || "",
+          no_hp_ortu: json.berkas?.no_hp_ortu || "",
+          pekerjaan_ortu: json.berkas?.pekerjaan_ortu || "",
+          alamat_ortu: json.berkas?.alamat_ortu || ""
+        });
       }
     } catch (err) {
       console.error("Fetch detail error:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleUpdatePendaftar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingEdit(true);
+    try {
+      // 1. Update User Account
+      const userRes = await fetch(`/api/admin/pendaftar/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: editForm.username,
+          password: editForm.password,
+          email: editForm.email,
+          asal_sekolah: editForm.asal_sekolah,
+          jenis_kelamin: editForm.jenis_kelamin
+        }),
+      });
+
+      // 2. Update Berkas if exists
+      if (data?.berkas) {
+        await fetch(`/api/berkas/${data.berkas.id_berkas}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nama_pendaftar: editForm.nama_pendaftar,
+            nisn_pendaftar: editForm.nisn_pendaftar,
+            alamat_pendaftar: editForm.alamat_pendaftar,
+            agama: editForm.agama,
+            tanggallahir_pendaftar: editForm.tanggallahir_pendaftar,
+            nama_ortu: editForm.nama_ortu,
+            no_hp_ortu: editForm.no_hp_ortu,
+            pekerjaan_ortu: editForm.pekerjaan_ortu,
+            alamat_ortu: editForm.alamat_ortu
+          }),
+        });
+      }
+
+      if (userRes.ok) {
+        fetchDetail();
+        setShowEditModal(false);
+        alert("Data pendaftar berhasil diperbarui!");
+      } else {
+        const err = await userRes.json();
+        alert(err.message || "Gagal memperbarui data");
+      }
+    } catch (err) {
+      console.error("Update error:", err);
+      alert("Terjadi kesalahan sistem");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleDeletePendaftar = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/pendaftar/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        alert("Pendaftar berhasil dihapus!");
+        router.push("/admin/pendaftar");
+      } else {
+        const err = await res.json();
+        alert(err.message || "Gagal menghapus pendaftar");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Terjadi kesalahan sistem");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -147,12 +271,13 @@ export default function PendaftarDetailPage() {
           nilai_smt2: scores.smt2,
           nilai_smt3: scores.smt3,
           nilai_smt4: scores.smt4,
-          nilai_smt5: scores.smt5
+          nilai_smt5: scores.smt5,
+          status_seleksi: statusSeleksi
         }),
       });
       if (res.ok) {
         fetchDetail();
-        alert("Nilai berhasil disimpan!");
+        alert("Data seleksi berhasil disimpan!");
       }
     } catch (err) {
       console.error("Save scores error:", err);
@@ -163,7 +288,6 @@ export default function PendaftarDetailPage() {
 
   const averageScore = ((scores.smt1 + scores.smt2 + scores.smt3 + scores.smt4 + scores.smt5) / 5).toFixed(2);
 
-  // Parse Prestasi JSON
   const renderPrestasiList = () => {
     if (!data?.berkas?.prestasi) return <p className="text-sm text-gray-400 italic">Tidak ada prestasi dilampirkan.</p>;
     
@@ -218,23 +342,40 @@ export default function PendaftarDetailPage() {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center gap-4">
-        <button 
-          onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h2 className="text-lg font-semibold text-[#111827]">Detail Pendaftar</h2>
-          <p className="text-sm text-[#6b7280]">
-            {data.berkas?.nama_pendaftar || data.username} • NISN: {data.berkas?.nisn_pendaftar || "-"}
-          </p>
+      <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => router.back()}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h2 className="text-lg font-semibold text-[#111827]">Detail Pendaftar</h2>
+            <p className="text-sm text-[#6b7280]">
+              {data.berkas?.nama_pendaftar || data.username} • NISN: {data.berkas?.nisn_pendaftar || "-"}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowConfirmDelete(true)}
+            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
+            title="Hapus Pendaftar"
+          >
+            <Trash2 size={20} />
+          </button>
+          <button 
+            onClick={() => setShowEditModal(true)}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors border border-gray-300 shadow-sm"
+          >
+            <Edit2 size={16} />
+            Edit Data Pendaftar
+          </button>
         </div>
       </header>
 
       <div className="px-8 py-6 grid grid-cols-1 lg:grid-cols-10 gap-6">
-        {/* Left Column: Berkas Info */}
         <div className="lg:col-span-6 flex flex-col gap-6">
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shrink-0">
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
@@ -280,7 +421,6 @@ export default function PendaftarDetailPage() {
               </div>
             </div>
 
-            {/* Validation Actions */}
             <div className="px-6 py-6 border-t border-gray-100 bg-gray-50/30">
               <h4 className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-4">Tindakan Validasi</h4>
               
@@ -349,7 +489,6 @@ export default function PendaftarDetailPage() {
           </div>
         </div>
 
-        {/* Right Column: Seleksi & Scores */}
         <div className="lg:col-span-4 flex flex-col gap-6">
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shrink-0">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -389,13 +528,30 @@ export default function PendaftarDetailPage() {
                     </div>
                   </div>
 
+                  <div className="space-y-1 mt-4">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status Kelulusan</label>
+                    <select 
+                      className={`w-full p-3 border rounded-xl text-sm font-bold focus:outline-none transition-all ${
+                        statusSeleksi === "LULUS" ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
+                        statusSeleksi === "TIDAK_LULUS" ? "bg-red-50 border-red-200 text-red-700" :
+                        "bg-white border-gray-200 text-gray-700"
+                      }`}
+                      value={statusSeleksi}
+                      onChange={(e) => setStatusSeleksi(e.target.value)}
+                    >
+                      <option value="MENUNGGU">⌛ MENUNGGU</option>
+                      <option value="LULUS">✅ LULUS SELEKSI</option>
+                      <option value="TIDAK_LULUS">❌ TIDAK LULUS</option>
+                    </select>
+                  </div>
+
                   <button 
                     onClick={handleSaveScores}
                     disabled={isSavingScores}
                     className="w-full bg-[#1e3a8a] text-white py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-800 transition-colors disabled:opacity-50 mt-4"
                   >
                     {isSavingScores ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                    Simpan Nilai
+                    Simpan Nilai & Status
                   </button>
                 </div>
               )}
@@ -403,6 +559,232 @@ export default function PendaftarDetailPage() {
           </div>
         </div>
       </div>
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <header className="px-8 py-5 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Edit2 size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 leading-none mb-1">Edit Seluruh Data Pendaftar</h3>
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest leading-none">Manajemen Akun dan Profil</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowEditModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400"
+              >
+                <X size={20} />
+              </button>
+            </header>
+
+            <form onSubmit={handleUpdatePendaftar} className="overflow-y-auto flex-1 p-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                <div className="md:col-span-2">
+                   <h4 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3 mb-6">
+                     <Lock size={14} /> Keamanan & Akun
+                   </h4>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Username Login</label>
+                        <div className="relative">
+                           <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                           <input 
+                            type="text" required
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:bg-white transition-all"
+                            value={editForm.username}
+                            onChange={(e) => setEditForm({...editForm, username: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Email Terdaftar</label>
+                        <div className="relative">
+                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                           <input 
+                            type="email" 
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:bg-white transition-all"
+                            value={editForm.email}
+                            onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Password Baru (Opsional)</label>
+                        <div className="relative">
+                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                           <input 
+                            type="password"
+                            placeholder="Isi jika ingin ubah"
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:border-blue-500 focus:bg-white transition-all"
+                            value={editForm.password}
+                            onChange={(e) => setEditForm({...editForm, password: e.target.value})}
+                          />
+                        </div>
+                      </div>
+                   </div>
+                </div>
+
+                <hr className="md:col-span-2 border-gray-100" />
+
+                <div className="space-y-6">
+                  <h4 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3">
+                     <User size={14} /> Data Pribadi
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Lengkap Sesuai Ijazah</label>
+                      <input 
+                        type="text" required
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"
+                        value={editForm.nama_pendaftar}
+                        onChange={(e) => setEditForm({...editForm, nama_pendaftar: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">NISN</label>
+                        <input 
+                          type="text" required
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"
+                          value={editForm.nisn_pendaftar}
+                          onChange={(e) => setEditForm({...editForm, nisn_pendaftar: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Jenis Kelamin</label>
+                        <select 
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"
+                          value={editForm.jenis_kelamin}
+                          onChange={(e) => setEditForm({...editForm, jenis_kelamin: e.target.value})}
+                        >
+                          <option value="Laki-laki">Laki-laki</option>
+                          <option value="Perempuan">Perempuan</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tanggal Lahir</label>
+                        <input 
+                          type="date" required
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"
+                          value={editForm.tanggallahir_pendaftar}
+                          onChange={(e) => setEditForm({...editForm, tanggallahir_pendaftar: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Agama</label>
+                        <select 
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"
+                          value={editForm.agama}
+                          onChange={(e) => setEditForm({...editForm, agama: e.target.value})}
+                        >
+                          <option value="Katolik">Katolik</option>
+                          <option value="Kristen">Kristen</option>
+                          <option value="Islam">Islam</option>
+                          <option value="Budha">Budha</option>
+                          <option value="Hindu">Hindu</option>
+                          <option value="Lainnya">Lainnya</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Asal Sekolah</label>
+                      <div className="relative">
+                         <School className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                         <input 
+                          type="text" required
+                          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"
+                          value={editForm.asal_sekolah}
+                          onChange={(e) => setEditForm({...editForm, asal_sekolah: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Alamat Lengkap</label>
+                      <textarea 
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold min-h-[80px]"
+                        value={editForm.alamat_pendaftar}
+                        onChange={(e) => setEditForm({...editForm, alamat_pendaftar: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h4 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3">
+                     <MapPin size={14} /> Data Orang Tua
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nama Orang Tua / Wali</label>
+                      <input 
+                        type="text" required
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"
+                        value={editForm.nama_ortu}
+                        onChange={(e) => setEditForm({...editForm, nama_ortu: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nomor HP</label>
+                        <div className="relative">
+                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                           <input 
+                            type="text" required
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"
+                            value={editForm.no_hp_ortu}
+                            onChange={(e) => setEditForm({...editForm, no_hp_ortu: e.target.value.replace(/\D/g, '')})}
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pekerjaan</label>
+                        <input 
+                          type="text" required
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold"
+                          value={editForm.pekerjaan_ortu}
+                          onChange={(e) => setEditForm({...editForm, pekerjaan_ortu: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Alamat Orang Tua</label>
+                      <textarea 
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold min-h-[80px]"
+                        value={editForm.alamat_ortu}
+                        onChange={(e) => setEditForm({...editForm, alamat_ortu: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-10 flex gap-3">
+                 <button 
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="flex-1 bg-[#1e3a8a] text-white py-4 rounded-2xl text-sm font-black flex items-center justify-center gap-3 hover:bg-blue-800 transition-all shadow-xl shadow-blue-900/20 active:scale-[0.98] disabled:opacity-50"
+                >
+                  {isSavingEdit ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                  SIMPAN SEMUA PERUBAHAN
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-8 bg-gray-100 text-gray-500 rounded-2xl text-sm font-bold hover:bg-gray-200 transition-all"
+                >
+                  BATAL
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         isOpen={showConfirmValid}
@@ -428,6 +810,19 @@ export default function PendaftarDetailPage() {
           setShowConfirmReject(false);
         }}
         onCancel={() => setShowConfirmReject(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={showConfirmDelete}
+        title="Hapus Pendaftar Permanen?"
+        message="Tindakan ini tidak bisa dibatalkan. Seluruh data akun, berkas, dan nilai seleksi siswa ini akan dihapus selamanya dari sistem."
+        confirmLabel={isDeleting ? "Menghapus..." : "Ya, Hapus Permanen"}
+        confirmVariant="danger"
+        onConfirm={() => {
+          handleDeletePendaftar();
+          setShowConfirmDelete(false);
+        }}
+        onCancel={() => setShowConfirmDelete(false)}
       />
     </>
   );

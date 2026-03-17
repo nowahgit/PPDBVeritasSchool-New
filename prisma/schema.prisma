@@ -17,6 +17,8 @@ model User {
   jenis_kelamin      String?   @db.VarChar(10)
   reset_token        String?   @db.VarChar(255)
   reset_token_expiry DateTime?
+  created_at         DateTime  @default(now())
+  no_hp              String?   @db.VarChar(15)
   admin              Admin?
   berkas             Berkas?
   seleksi            Seleksi[]
@@ -56,6 +58,30 @@ model Berkas {
   @@index([status_validasi])
 }
 
+model SelectionPeriod {
+  id            Int          @id @default(autoincrement())
+  nama          String       @db.VarChar(100)
+  deskripsi     String?      @db.Text
+  tanggal_buka  DateTime
+  tanggal_tutup DateTime
+  status        PeriodStatus @default(AKTIF)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+}
+
+model ArsipSeleksi {
+  id                Int      @id @default(autoincrement())
+  nama_periode      String   @db.VarChar(100)
+  deskripsi         String?  @db.Text
+  tanggal_buka      DateTime
+  tanggal_tutup     DateTime
+  total_pendaftar   Int
+  total_lulus       Int
+  total_tidak_lulus Int
+  data_pendaftar    Json
+  tanggal_arsip     DateTime @default(now())
+}
+
 model Seleksi {
   id_seleksi     Int           @id @default(autoincrement())
   id_panitia     Int
@@ -70,6 +96,7 @@ model Seleksi {
   waktu_seleksi  DateTime
   created_at     DateTime      @default(now())
   updated_at     DateTime      @updatedAt
+  is_archived    Boolean       @default(false)
   panitia        Admin         @relation(fields: [id_panitia], references: [id_panitia])
   user           User          @relation(fields: [user_id], references: [id])
 
@@ -92,4 +119,10 @@ enum StatusSeleksi {
   MENUNGGU
   LULUS
   TIDAK_LULUS
+}
+
+enum PeriodStatus {
+  AKTIF
+  SELESAI
+  DITUTUP
 }

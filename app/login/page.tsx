@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -39,8 +39,14 @@ export default function LoginPage() {
       if (res?.error) {
         setError("Kredensial tidak valid. Silakan periksa kembali.");
       } else {
+        const session = await getSession();
         router.refresh();
-        router.push("/dashboard"); 
+        
+        if (session?.user?.role === "PANITIA") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
       }
     } catch (err) {
       setError("Terjadi kesalahan sistem.");
