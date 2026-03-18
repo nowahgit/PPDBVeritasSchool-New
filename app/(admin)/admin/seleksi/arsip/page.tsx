@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { getArchivedPeriods } from "../actions";
 
+export const dynamic = 'force-dynamic'
+
 export default async function ArsipSeleksiPage() {
   const archives = await getArchivedPeriods();
 

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import BerkasClient from "./BerkasClient";
 
+export const dynamic = 'force-dynamic'
+
 export default async function BerkasPage() {
   const session = await getServerSession(authOptions);
 

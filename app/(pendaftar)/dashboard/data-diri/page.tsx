@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import DataDiriForm from "./DataDiriForm";
 
+export const dynamic = 'force-dynamic'
+
 export default async function DataDiriPage() {
   const session = await getServerSession(authOptions);
 

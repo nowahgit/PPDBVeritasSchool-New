@@ -6,6 +6,8 @@ import SeleksiForm from "@/components/admin/seleksi-form";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic'
+
 export default async function SeleksiDetailPage({
   params,
 }: {

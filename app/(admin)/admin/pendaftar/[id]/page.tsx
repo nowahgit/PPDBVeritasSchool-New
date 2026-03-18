@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
+export const dynamic = 'force-dynamic'
+
 interface PrestasiItem {
   nama: string;
   sertifikat: string | null;

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
+export const dynamic = 'force-dynamic'
+
 export default function AdminSettingsPage() {
   const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);

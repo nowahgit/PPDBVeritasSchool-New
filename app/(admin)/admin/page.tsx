@@ -12,6 +12,8 @@ import {
   ShieldCheck
 } from "lucide-react";
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
 

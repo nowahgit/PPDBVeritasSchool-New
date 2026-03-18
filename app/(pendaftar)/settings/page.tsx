@@ -15,6 +15,8 @@ import {
   ShieldCheck
 } from "lucide-react";
 
+export const dynamic = 'force-dynamic'
+
 export default function SettingsPage() {
   const { data: session, update } = useSession();
   const [email, setEmail] = useState("");

@@ -14,6 +14,8 @@ import {
 import { getArchiveDetail } from "../../actions";
 import ArchiveDetailClient from "./ArchiveDetailClient";
 
+export const dynamic = 'force-dynamic'
+
 export default async function ArsipDetailPage({ 
   params 
 }: { 

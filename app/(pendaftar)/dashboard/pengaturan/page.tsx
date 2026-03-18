@@ -3,6 +3,8 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import PengaturanForm from "./PengaturanForm";
 
+export const dynamic = 'force-dynamic'
+
 export default async function PengaturanPage() {
   const session = await getServerSession(authOptions);
 

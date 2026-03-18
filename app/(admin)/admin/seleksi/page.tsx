@@ -21,6 +21,8 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { archiveSelectionPeriod } from "./actions";
 import DialogCard from "@/components/ui/DialogCard";
 
+export const dynamic = 'force-dynamic'
+
 interface SeleksiGroup {
   nama_seleksi: string;
   waktu_seleksi: string;

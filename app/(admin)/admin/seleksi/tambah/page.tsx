@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Loader2, Calendar, Target } from "lucide-react";
 import { tambahPeriode } from "../actions";
 
+export const dynamic = 'force-dynamic'
+
 export default function TambahSeleksiPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);

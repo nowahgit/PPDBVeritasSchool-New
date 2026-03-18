@@ -20,6 +20,8 @@ import {
   School
 } from "lucide-react";
 
+export const dynamic = 'force-dynamic'
+
 export default function AdminTambahPendaftarPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);

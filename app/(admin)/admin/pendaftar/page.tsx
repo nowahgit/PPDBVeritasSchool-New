@@ -9,6 +9,8 @@ import PendaftarTable from "./PendaftarTable";
 import Pagination from "./Pagination";
 import FilterBar from "./FilterBar";
 
+export const dynamic = 'force-dynamic'
+
 export default async function PendaftarListPage({
   searchParams,
 }: {

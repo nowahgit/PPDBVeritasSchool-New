@@ -11,6 +11,8 @@ import {
   CalendarDays
 } from "lucide-react";
 
+export const dynamic = 'force-dynamic'
+
 export default async function StatusSeleksiPage() {
   const session = await getServerSession(authOptions);
 
